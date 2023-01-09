@@ -37,17 +37,19 @@ const upload = multer({
   },
 });
 
-router.post(
-  "/:id",
-  upload.single("resume"),
-  async (req, res) => {
-    const { email, name } = req.body;
+router.post("/:id", upload.single("resume"), async (req, res) => {
+  const { email, name } = req.body;
 
-    const jobDetails = await Jobs.findById(req.params.id);
+  const jobDetails = await Jobs.findById(req.params.id);
 
-    let beforeMarkCoverLetter = `# ${name}\n\nSample cover letter for job application for **${jobDetails.title}**.`;
-    let afterMarkCoverLetter = marked.parse(beforeMarkCoverLetter);
+  let beforeMarkCoverLetter = `# ${name}\n\nSample cover letter for job application for **${jobDetails.title}**.`;
+  let afterMarkCoverLetter = marked.parse(beforeMarkCoverLetter);
 
+  let checkIfAlredyApplied = await jobDetails.applied_by.findIndex(
+    (x) => x.email === email
+  );
+  console.log(checkIfAlredyApplied === -1);
+  if (checkIfAlredyApplied === -1) {
     const filter = { _id: req.params.id };
     const jobData = {
       email,
@@ -68,7 +70,9 @@ router.post(
     } else {
       return res.status(400).json(errorFunction(true, "Error Applying Job"));
     }
+  } else {
+    return res.status(400).json(errorFunction(true, "Already Apllied"));
   }
-);
+});
 
 module.exports = router;
